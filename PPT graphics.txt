@@ -1,0 +1,11 @@
+resolution: 1920x1080
+
+active block size: 36,36
+preview block size (next): 28,28
+preview block size (after next): 22,22
+
+grid topleft (excluding partially obstructed topmost row): 308,160
+grid bottomright: 632, 844
+
+numRows (excluding partially obstructed topmost row): 20
+numCols: 10
