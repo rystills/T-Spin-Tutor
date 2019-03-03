@@ -166,14 +166,26 @@ public class TSpinTutor extends JFrame {
         			case -41728: //L block
         				boardState[i][r] = true;
         				break;
+        			case -2171938: //garbage block
+        				boardState[i][r] = true;
+        				break;
         			default: //no block color detected
         				boardState[i][r] = false;
         				break;
         			}
         		}
         	}
+        	//construct the board state by checking if the center of each grid block is sufficiently bright
+			/*for (int x = gridLeft; x <= gridRight; x+= bSize) {
+        		for (int y = gridTop; y <= gridBot; y += bSize) {
+        			int r = (x-gridLeft)/bSize;
+        			int i = (y-gridTop)/bSize;
+        			curPixel = new Color(capture.getRGB(x+bSizeHalf, y+bSizeHalf));
+        			//80 seems to be a good threshold, where the center of placed blocks will always have a greater average value, while the center of empty or shadow blocks will not
+        			boardState[i][r] = (curPixel.getRed()+curPixel.getGreen()+curPixel.getBlue())/3 > 80;
+        		}
+        	}*/
 			System.out.println(capture.getRGB(gridRight+bSizeHalf,gridBot+bSizeHalf));
-			
             tutor.repaint();
             frameTime  = (System.nanoTime() - time)/1000000;
             long sleepTime = (1000/fps) - frameTime;
