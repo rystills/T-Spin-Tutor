@@ -1,6 +1,3 @@
 # T-Spin-Tutor  
-Aids players in setting up T-Spins in Puyo Puyo Tetris  
-Requirements:  
--Python 3.x  
--PyAutoGUI for analyzing the screen  
--Tkinter for rendering the overlay (this should already be installed if you are using a typical Python install)  
+Aids players in setting up T-Spins in Puyo Puyo Tetris, using real-time screen analysis and a transparent overlay.  
+Requires Java to run (1.8 or later is recommended, but earlier versions should still work)  

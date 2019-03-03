@@ -59,9 +59,9 @@ public class TSpinTutor extends JFrame {
             super.paintComponent(g);
             //text indicators
             g.setFont(uiFont);
-            g.drawString(String.format("Current Tetrimino: %s",curBlock), 50, 50);
-            g.drawString(String.format("Next Tetrimino: %s",nextBlock), 50, 75);
-            g.drawString(String.format("Prev Frame Time: %dms",frameTime), 50, 100);
+            g.drawString(String.format("Current Tetrimino: %s",curBlock), 50, 40);
+            g.drawString(String.format("Next Tetrimino: %s",nextBlock), 50, 65);
+            g.drawString(String.format("Prev Frame Time: %dms",frameTime), 50, 90);
             //board indicator
             g.setColor(Color.RED);
             for (int i = 0; i < numRows; ++i) {
