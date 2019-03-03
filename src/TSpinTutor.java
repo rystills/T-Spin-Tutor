@@ -31,6 +31,9 @@ public class TSpinTutor extends JFrame {
     static Tetrimino curBlock = null;
     static Tetrimino nextBlock = null;
     static boolean boardState[][] = new boolean[numRows][numCols];
+    static int shadowCols[] = new int[4];
+    static int shadowRows[] = new int[4];
+    static int curShadowCol;
     //ui vars
     static Font uiFont = new Font("Courier", Font.BOLD,36);
     static long frameTime = 0;
@@ -109,41 +112,63 @@ public class TSpinTutor extends JFrame {
 				break;
 			}
         	//check the top-left corner of each grid space in search of shadow indicator to determine current tetrimino
-        	curSearch:
+        	shadowCols[0] = shadowCols[1] = shadowCols[2] = shadowCols[3] = -1;
+			curShadowCol = 0;
         	for (int x = gridLeft; x <= gridRight; x+= bSize) {
         		for (int y = gridTop; y <= gridBot; y += bSize) {
         			switch (capture.getRGB(x,y)) {
         			case -8335379: //I block
         				curBlock = Tetrimino.I;
-        				break curSearch;
+        				shadowRows[curShadowCol] = (y-gridTop)/bSize;
+        				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+        				
+        				break;
         			case -6784: //O block
         				curBlock = Tetrimino.O;
-        				break curSearch;
+        				shadowRows[curShadowCol] = (y-gridTop)/bSize;
+        				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+        				break;
         			case -3500340: //T block
         				curBlock = Tetrimino.T;
-        				break curSearch;
+        				shadowRows[curShadowCol] = (y-gridTop)/bSize;
+        				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+        				break;
         			case -4923500: //S block
         				curBlock = Tetrimino.S;
-        				break curSearch;
+        				shadowRows[curShadowCol] = (y-gridTop)/bSize;
+        				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+        				break;
         			case -617316: //Z block
         				curBlock = Tetrimino.Z;
-        				break curSearch;
+        				shadowRows[curShadowCol] = (y-gridTop)/bSize;
+        				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+        				break;
         			case -8342818: //J block
         				curBlock = Tetrimino.J;
-        				break curSearch;
+        				shadowRows[curShadowCol] = (y-gridTop)/bSize;
+        				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+        				break;
         			case -17280: //L block
         				curBlock = Tetrimino.L;
-        				break curSearch;
+        				shadowRows[curShadowCol] = (y-gridTop)/bSize;
+        				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+        				break;
         			default: //no block color detected
         				break;
         			}
         		}
         	}
-			//construct the board state by checking for blocks of any color across the grid
+			//construct the board state by checking for blocks of any color across the grid, ignoring blocks above a shadow indicator block
         	for (int x = gridLeft; x <= gridRight; x+= bSize) {
-        		for (int y = gridTop; y <= gridBot; y += bSize) {
+        		for (int y = gridBot; y >= gridTop; y -= bSize) {
         			int r = (x-gridLeft)/bSize;
         			int i = (y-gridTop)/bSize;
+        			//any block above and in the same column as a shadow indicator is guaranteed to be empty
+    				if ((r == shadowCols[0] && i < shadowRows[0]) || (r == shadowCols[1] && i < shadowRows[1]) ||
+    						(r == shadowCols[2] && i < shadowRows[2]) || (r == shadowCols[3] && i < shadowRows[3])) {
+    					boardState[i][r] = false;
+        				continue;
+        			}
         			switch (capture.getRGB(x+bSizeHalf,y+bSizeHalf)) {
         			case -16738602: //I block
         				boardState[i][r] = true;
@@ -175,17 +200,6 @@ public class TSpinTutor extends JFrame {
         			}
         		}
         	}
-        	//construct the board state by checking if the center of each grid block is sufficiently bright
-			/*for (int x = gridLeft; x <= gridRight; x+= bSize) {
-        		for (int y = gridTop; y <= gridBot; y += bSize) {
-        			int r = (x-gridLeft)/bSize;
-        			int i = (y-gridTop)/bSize;
-        			curPixel = new Color(capture.getRGB(x+bSizeHalf, y+bSizeHalf));
-        			//80 seems to be a good threshold, where the center of placed blocks will always have a greater average value, while the center of empty or shadow blocks will not
-        			boardState[i][r] = (curPixel.getRed()+curPixel.getGreen()+curPixel.getBlue())/3 > 80;
-        		}
-        	}*/
-			System.out.println(capture.getRGB(gridRight+bSizeHalf,gridBot+bSizeHalf));
             tutor.repaint();
             frameTime  = (System.nanoTime() - time)/1000000;
             long sleepTime = (1000/fps) - frameTime;
