@@ -12,6 +12,7 @@ public class TSpinTutor extends JFrame {
 	static int sw = 1920;
 	static int sh = 1080;
 	static int bSize = 36;
+	static int bSizeHalf = 18;
 	static int bSizePrev = 28;
 	static int bSizePrevFuture = 22;
 	static int gridLeft = 308;
@@ -29,6 +30,7 @@ public class TSpinTutor extends JFrame {
     }
     static Tetrimino curBlock = null;
     static Tetrimino nextBlock = null;
+    static boolean boardState[][] = new boolean[numRows][numCols];
     //ui vars
     static Font uiFont = new Font("Courier", Font.BOLD,36);
     static long frameTime = 0;
@@ -52,14 +54,20 @@ public class TSpinTutor extends JFrame {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            /*int x = gridLeft + bSize*r.nextInt(numCols);
-    		int y = gridTop + bSize*r.nextInt(numRows);
-    		g.setColor(Color.RED);
-    		g.fillRect(x,y,bSize,bSize);*/
+            //text indicators
             g.setFont(uiFont);
             g.drawString(String.format("Current Tetrimino: %s",curBlock), 50, 50);
             g.drawString(String.format("Next Tetrimino: %s",nextBlock), 50, 75);
             g.drawString(String.format("Prev Frame Time: %dms",frameTime), 50, 100);
+            //board indicator
+            g.setColor(Color.RED);
+            for (int i = 0; i < numRows; ++i) {
+            	for (int r = 0; r < numCols; ++r) {
+            		if (boardState[i][r]) {
+            			g.fillRect(gridRight + 2*bSize + bSize*r,gridTop + bSize*i,bSize,bSize);	
+            		}
+            	}
+            }
         }
     }
 	
@@ -101,7 +109,7 @@ public class TSpinTutor extends JFrame {
 				break;
 			}
         	//check the top-left corner of each grid space in search of shadow indicator to determine current tetrimino
-curSearch:
+        	curSearch:
         	for (int x = gridLeft; x <= gridRight; x+= bSize) {
         		for (int y = gridTop; y <= gridBot; y += bSize) {
         			switch (capture.getRGB(x,y)) {
@@ -131,6 +139,41 @@ curSearch:
         			}
         		}
         	}
+			//construct the board state by checking for blocks of any color across the grid
+        	for (int x = gridLeft; x <= gridRight; x+= bSize) {
+        		for (int y = gridTop; y <= gridBot; y += bSize) {
+        			int r = (x-gridLeft)/bSize;
+        			int i = (y-gridTop)/bSize;
+        			switch (capture.getRGB(x+bSizeHalf,y+bSizeHalf)) {
+        			case -16738602: //I block
+        				boardState[i][r] = true;
+        				break;
+        			case -18944: //O block
+        				boardState[i][r] = true;
+        				break;
+        			case -8117116: //T block
+        				boardState[i][r] = true;
+        				break;
+        			case -11357672: //S block
+        				boardState[i][r] = true;
+        				break;
+        			case -2223080: //Z block
+        				boardState[i][r] = true;
+        				break;
+        			case -16757331: //J block
+        				boardState[i][r] = true;
+        				break;
+        			case -41728: //L block
+        				boardState[i][r] = true;
+        				break;
+        			default: //no block color detected
+        				boardState[i][r] = false;
+        				break;
+        			}
+        		}
+        	}
+			System.out.println(capture.getRGB(gridRight+bSizeHalf,gridBot+bSizeHalf));
+			
             tutor.repaint();
             frameTime  = (System.nanoTime() - time)/1000000;
             long sleepTime = (1000/fps) - frameTime;
