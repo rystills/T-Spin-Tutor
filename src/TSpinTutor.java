@@ -15,7 +15,24 @@ public class TSpinTutor extends JFrame {
 	static Random r = new Random();
 	//graphics constants
 	static enum Tetrimino {
-        I, O, T, S, Z, J, L
+        I(0,0,1,0,2,0,3,0), 
+        O(0,0,1,0,0,1,1,1), 
+        T(1,0,0,1,1,1,2,1), 
+        S(0,1,1,1,1,0,2,0), 
+        Z(0,0,1,0,1,1,2,1), 
+        J(1,0,1,1,1,2,0,2), 
+        L(0,0,0,1,0,2,1,2);
+		private int[][] pos;
+		Tetrimino(int x0,int y0, int x1,int y1, int x2,int y2, int x3,int y3) {
+			int maxX = Math.max(Math.max(Math.max(x0,x1),x2),x3);
+			int maxY = Math.max(Math.max(Math.max(y0,y1),y2),y3);
+			pos = new int[][] {
+				{x0,y0,x1,y1,x2,y2,x3,y3}, 
+				{y0,maxX-x0,y1,maxX-x1,y2,maxX-x2,y3,maxX-x3}, 
+				{maxX-x0,maxY-y0,maxX-x1,maxY-y1,maxX-x2,maxY-y2,maxX-x3,maxY-y3}, 
+				{maxY-y0,x0,maxY-y1,x1,maxY-y2,x2,maxY-y3,x3}
+			};
+		}
     }
 	//TODO: at the moment, the resolution is hard-coded to 1920x1080 as this is the only way to guarantee matching pixel colors. Fuzzy comparison should eventually resolve this.
 	static final int sw = 1920;
@@ -40,12 +57,18 @@ public class TSpinTutor extends JFrame {
     static Rectangle screenRect;
     static BufferedImage capture;
 	//game state
-    static Tetrimino curBlock = null;
+    static Tetrimino curBlock = Tetrimino.O;
     static Tetrimino nextBlock = null;
     static boolean boardState[][] = new boolean[numRows][numCols];
     static int shadowCols[] = new int[4];
     static int shadowRows[] = new int[4];
     static int curShadowCol;
+    static boolean boardPieceCopy[] = new boolean[4];
+    //T-Spin detection
+    static boolean setupFound = false;
+    static int setupRotInd = 0;
+    static int setupX = 0;
+    static int setupY = 0;
     
     /**
      * Apply the necessary properties for a fully transparent, always on top overlay
@@ -89,6 +112,12 @@ public class TSpinTutor extends JFrame {
             g.drawString(String.format("Prev Frame Time: %dms",frameTime), 50, 90);
             //board indicator
            drawBoard(g);
+           if (setupFound) {
+        	   for (int i = 0; i < curBlock.pos[setupRotInd].length; i+=2) {
+        		   g.setColor(Color.BLUE);
+        		   g.fillRect(gridRight + 2*bSize + bSize*setupX+curBlock.pos[setupRotInd][i],gridTop + bSize*setupY+curBlock.pos[setupRotInd][i+1],bSize,bSize);
+        	   }
+           }
         }
         
         /**
@@ -238,6 +267,100 @@ public class TSpinTutor extends JFrame {
     	}
 	}
 	
+	/**
+	 * search for any T-spins that may be created using the current tetrimino given the current board state
+	 */
+	public static void searchTSpinSetups() {
+		int cx,cy;
+		//if a T-spin is already present on the board, no need to look for an additional setup
+		if (boardContainsTSpin(true,0,0,0)) {
+			setupFound = false;
+			return;
+		}
+		for (int i = 0; i < curBlock.pos.length; ++i) { //for all rotations
+			for (int x = 0; x < numRows; ++x) { //for all rows
+				boardIter:
+					for (int y = 0; y < numCols; ++y) { //for all columns
+						//check all block positions for validity
+						boolean touchingGround = false;
+						for (int j = 0; j < curBlock.pos[i].length; j+=2) {
+							cx = x + curBlock.pos[i][j];
+							cy = y + curBlock.pos[i][j+1];
+							//ignore positions that put us partially out of bounds
+							if (cx >= numRows || cy >= numCols) {
+								continue boardIter;
+							}
+							//ignore positions that intersect already placed blocks
+							if (boardState[cx][cy]) {
+								continue boardIter;
+							}
+							//check if this block is on top of another block or the ground
+							if (cx == numRows-1 || boardState[cx+1][cy]) {
+								touchingGround = true;
+							}
+						}
+						//make sure at least one block is on top of another block or the ground
+						if (!touchingGround) {
+							continue boardIter;
+						}
+						//this is a valid placement candidate; check if this position produces a T-spin
+						if (boardContainsTSpin(false,x,y,i)) {
+							setupFound = true;
+							setupX = x;
+							setupY = y;
+							setupRotInd = i;
+							return;
+						}
+					}
+			}
+		}
+		setupFound = false;
+	}
+	
+	/**
+	 * determine whether or not the board contains a T-Spin, optionally including the specified position and rotation of the current block
+	 * @param useNewBlock (boolean): whether to consider the specified block information (true) or just the board state as-is (false)
+	 * @param x (int): the row in which to test the current block
+	 * @param y (int): the column in which to test the current block
+	 * @param rotInd (int): the index in the rotation array in which to test the current block
+	 * @returns: whether the board contains a T-Spin (true) or not (false)
+	 */
+	private static boolean boardContainsTSpin(boolean useNewBlock, int x, int y, int rotInd) {
+		//TODO: checking the whole board is pretty inefficient. This can easily be optimized to just check directly around the new block
+		if (useNewBlock) { //temporarily copy the block positions onto the board
+			boardPieceCopy[0] = boardState[x+curBlock.pos[rotInd][0]][y+curBlock.pos[rotInd][1]];
+			boardState[x+curBlock.pos[rotInd][0]][y+curBlock.pos[rotInd][1]] = true;
+			
+			boardPieceCopy[1] = boardState[x+curBlock.pos[rotInd][2]][y+curBlock.pos[rotInd][3]];
+			boardState[x+curBlock.pos[rotInd][2]][y+curBlock.pos[rotInd][3]] = true;
+			
+			boardPieceCopy[2] = boardState[x+curBlock.pos[rotInd][4]][y+curBlock.pos[rotInd][5]];
+			boardState[x+curBlock.pos[rotInd][4]][y+curBlock.pos[rotInd][5]] = true;
+			
+			boardPieceCopy[3] = boardState[x+curBlock.pos[rotInd][6]][y+curBlock.pos[rotInd][7]];
+			boardState[x+curBlock.pos[rotInd][6]][y+curBlock.pos[rotInd][7]] = true;
+		}
+		boolean foundTSpin = false;
+		baseIter:
+			for (int i = 0; i < numRows-3; ++i) {
+				for (int r = 0; r < numCols-3; ++r) {
+					if (!boardState[i+1][r] && !boardState[i+1][r+1] && !boardState[i+1][r+2] && !boardState[i][r+1] && !boardState[i+2][r+1] && //center cross should be free
+							boardState[i+2][r] && boardState[i+2][r+2] && //bottom left and bottom right corners should be occupied
+							(boardState[i][r] ^ boardState[i][r+2])) { //either topleft or topright should be occupied, but not both 
+						foundTSpin = true;
+						break baseIter;
+					}
+				}
+			}
+		if (useNewBlock) { //revert our board modifications from the copies we made earlier
+			boardState[x+curBlock.pos[rotInd][0]][y+curBlock.pos[rotInd][1]] = boardPieceCopy[0];
+			boardState[x+curBlock.pos[rotInd][2]][y+curBlock.pos[rotInd][3]] = boardPieceCopy[1];
+			boardState[x+curBlock.pos[rotInd][4]][y+curBlock.pos[rotInd][5]] = boardPieceCopy[2];
+			boardState[x+curBlock.pos[rotInd][6]][y+curBlock.pos[rotInd][7]] = boardPieceCopy[3];
+		}
+		return foundTSpin;
+	}
+	
 	public static void main(String[] args) throws InterruptedException, AWTException {
         final TSpinTutor tutor = new TSpinTutor();   
         Panel panel = new Panel();
@@ -253,6 +376,7 @@ public class TSpinTutor extends JFrame {
         	determineNextTetrimino();
         	determineCurrentTetrimino();
 			determineBoardState();
+			searchTSpinSetups();
 			
 			//re-render and wait for the next frame
             tutor.repaint();
