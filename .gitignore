@@ -108,3 +108,6 @@ venv.bak/
 .pydevproject
 bin
 .classpath
+
+# debug files
+debugCfgs

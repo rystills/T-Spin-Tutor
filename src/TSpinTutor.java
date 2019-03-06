@@ -1,4 +1,5 @@
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Random;
 import java.awt.image.BufferedImage;
 
@@ -12,7 +13,7 @@ import javax.swing.JPanel;
 public class TSpinTutor extends JFrame {
 	private static final long serialVersionUID = 1L;
 	//global random generator
-	static Random r = new Random();
+	static Random rand = new Random();
 	//graphics constants
 	static enum Tetrimino {
         I(0,0,1,0,2,0,3,0), 
@@ -66,10 +67,7 @@ public class TSpinTutor extends JFrame {
     static int curShadowCol;
     static boolean boardPieceCopy[] = new boolean[4];
     //T-Spin detection
-    static boolean setupFound = false;
-    static int setupRotInd = 0;
-    static int setupX = 0;
-    static int setupY = 0;
+    static ArrayList<int[]> setups = new ArrayList<int[]>(); //setups are stored as lists of [rotInd,x,y] triplets
     
     /**
      * Apply the necessary properties for a fully transparent, always on top overlay
@@ -113,13 +111,37 @@ public class TSpinTutor extends JFrame {
             g.drawString(String.format("Prev Frame Time: %dms",frameTime), 50, 90);
             //board indicator
            drawBoard(g);
-           if (setupFound) {
-        	   for (int i = 0; i < curBlock.pos[setupRotInd].length; i+=2) {
-        		   g.setColor(Color.BLUE);
-        		   g.fillRect(gridRight + 2*bSize + bSize*(setupY+curBlock.pos[setupRotInd][i+1]),gridTop + bSize*(setupX+curBlock.pos[setupRotInd][i]),bSize,bSize);
-        	   }
-           }
+           drawFoundSetups(g);
         }
+		
+		/**
+		 draws all T-Spin setups found on the current board
+		 * @param g (Graph0cs: the graphics instance provided in this Panel's paintComponent
+		 */
+		private void drawFoundSetups(Graphics g) {
+			if (setups.size() > 0) {
+				for (int r = 0; r < setups.size(); ++r) {
+					int[] setup = setups.get(r);
+					int setupRotInd = setup[0];
+					int setupX = setup[1];
+					int setupY = setup[2];
+					int offY = (int)Math.round(3*Math.sin(time/100000000+2*r));
+					g.setColor(new Color(r%3==0?1:.3f,r%3==1?1:.3f,r%3==2?1:.3f,.4f));
+					for (int i = 0; i < curBlock.pos[setupRotInd].length; i+=2) {
+						g.fillRect(gridLeft + bSize*(setupY+curBlock.pos[setupRotInd][i+1]),offY+gridTop + bSize*(setupX+curBlock.pos[setupRotInd][i]),bSize,bSize);
+						//leave a 2x2 hole in the center to avoid our overlay interfering with block detection
+						g.clearRect(gridLeft + bSize*(setupY+curBlock.pos[setupRotInd][i+1]) + bSizeHalf-1,gridTop + bSize*(setupX+curBlock.pos[setupRotInd][i])+bSizeHalf-1,2,2);
+					}
+					//clear the rect borders to avoid our overlay interfering with block shadow detection
+					for (int i = 0; i < curBlock.pos[setupRotInd].length; i+=2) {
+						g.clearRect(gridLeft + bSize*(setupY+curBlock.pos[setupRotInd][i+1]),gridTop + bSize*(setupX+curBlock.pos[setupRotInd][i]),bSize,1);
+						g.clearRect(gridLeft + bSize*(setupY+curBlock.pos[setupRotInd][i+1]),gridTop + bSize*(setupX+curBlock.pos[setupRotInd][i]),1,bSize);
+						g.clearRect(gridLeft + bSize*(setupY+curBlock.pos[setupRotInd][i+1]) + bSize-1,gridTop + bSize*(setupX+curBlock.pos[setupRotInd][i]),1,bSize);
+						g.clearRect(gridLeft + bSize*(setupY+curBlock.pos[setupRotInd][i+1]),gridTop + bSize*(setupX+curBlock.pos[setupRotInd][i])+bSize-1,bSize,1);
+					}
+				}
+			}
+		}
         
         /**
          * draw the current board state, as determined from the last screenshot analysis. Useful for debugging board state detection.
@@ -131,7 +153,7 @@ public class TSpinTutor extends JFrame {
              	for (int r = 0; r < numCols; ++r) {
              		if (boardState[i][r]) {
              			//draw the board state one block size to the right of the actual board
-             			g.fillRect(gridRight + 2*bSize + bSize*r,gridTop + bSize*i,bSize,bSize);	
+             			g.fillRect(gridRight + 2*bSize + bSize*r,gridTop + bSize*i,bSize,bSize);
              		}
              	}
              }
@@ -272,12 +294,14 @@ public class TSpinTutor extends JFrame {
 	 * search for any T-spins that may be created using the current tetrimino given the current board state
 	 */
 	public static void searchTSpinSetups() {
-		int cx,cy;
+		if (setups.size() > 0) {
+			setups.clear();
+		}
 		//if a T-spin is already present on the board, no need to look for an additional setup
 		if (boardContainsTSpin(false,0,0,0)) {
-			setupFound = false;
 			return;
 		}
+		int cx,cy;
 		for (int i = 0; i < curBlock.pos.length; ++i) { //for all rotations
 			for (int x = 0; x < numRows; ++x) { //for all rows
 				boardIter:
@@ -306,16 +330,11 @@ public class TSpinTutor extends JFrame {
 						}
 						//this is a valid placement candidate; check if this position produces a T-spin
 						if (boardContainsTSpin(true,x,y,i)) {
-							setupFound = true;
-							setupX = x;
-							setupY = y;
-							setupRotInd = i;
-							return;
+							setups.add(new int[] { i,x,y });
 						}
 					}
 			}
 		}
-		setupFound = false;
 	}
 	
 	/**
