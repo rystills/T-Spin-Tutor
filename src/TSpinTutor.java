@@ -17,15 +17,16 @@ public class TSpinTutor extends JFrame {
 	static enum Tetrimino {
         I(0,0,1,0,2,0,3,0), 
         O(0,0,1,0,0,1,1,1), 
-        T(0,1,1,0,1,1,1,2), 
-        S(0,1,1,1,1,0,2,0), 
-        Z(0,0,1,0,1,1,2,1), 
-        J(1,0,1,1,1,2,0,2), 
-        L(0,0,0,1,0,2,1,2);
+        T(0,1,1,0,1,1,1,2),  
+        S(0,0,1,0,1,1,2,1),
+        Z(0,1,1,1,1,0,2,0),
+        J(0,0,0,1,0,2,1,2), 
+        L(1,0,1,1,1,2,0,2);
 		private int[][] pos;
 		Tetrimino(int x0,int y0, int x1,int y1, int x2,int y2, int x3,int y3) {
 			int maxX = Math.max(Math.max(Math.max(x0,x1),x2),x3);
 			int maxY = Math.max(Math.max(Math.max(y0,y1),y2),y3);
+			//pos stores the tetrimino block position offsets at all 4 rotations; populated here in the constructor for the sake of simplicity
 			pos = new int[][] {
 				{x0,y0,x1,y1,x2,y2,x3,y3}, 
 				{y0,maxX-x0,y1,maxX-x1,y2,maxX-x2,y3,maxX-x3}, 
