@@ -17,7 +17,7 @@ public class TSpinTutor extends JFrame {
 	static enum Tetrimino {
         I(0,0,1,0,2,0,3,0), 
         O(0,0,1,0,0,1,1,1), 
-        T(1,0,0,1,1,1,2,1), 
+        T(0,1,1,0,1,1,1,2), 
         S(0,1,1,1,1,0,2,0), 
         Z(0,0,1,0,1,1,2,1), 
         J(1,0,1,1,1,2,0,2), 
@@ -115,7 +115,7 @@ public class TSpinTutor extends JFrame {
            if (setupFound) {
         	   for (int i = 0; i < curBlock.pos[setupRotInd].length; i+=2) {
         		   g.setColor(Color.BLUE);
-        		   g.fillRect(gridRight + 2*bSize + bSize*setupX+curBlock.pos[setupRotInd][i],gridTop + bSize*setupY+curBlock.pos[setupRotInd][i+1],bSize,bSize);
+        		   g.fillRect(gridRight + 2*bSize + bSize*(setupY+curBlock.pos[setupRotInd][i+1]),gridTop + bSize*(setupX+curBlock.pos[setupRotInd][i]),bSize,bSize);
         	   }
            }
         }
@@ -273,7 +273,7 @@ public class TSpinTutor extends JFrame {
 	public static void searchTSpinSetups() {
 		int cx,cy;
 		//if a T-spin is already present on the board, no need to look for an additional setup
-		if (boardContainsTSpin(true,0,0,0)) {
+		if (boardContainsTSpin(false,0,0,0)) {
 			setupFound = false;
 			return;
 		}
@@ -304,7 +304,7 @@ public class TSpinTutor extends JFrame {
 							continue boardIter;
 						}
 						//this is a valid placement candidate; check if this position produces a T-spin
-						if (boardContainsTSpin(false,x,y,i)) {
+						if (boardContainsTSpin(true,x,y,i)) {
 							setupFound = true;
 							setupX = x;
 							setupY = y;
@@ -342,8 +342,8 @@ public class TSpinTutor extends JFrame {
 		}
 		boolean foundTSpin = false;
 		baseIter:
-			for (int i = 0; i < numRows-3; ++i) {
-				for (int r = 0; r < numCols-3; ++r) {
+			for (int i = 0; i < numRows-2; ++i) {
+				for (int r = 0; r < numCols-2; ++r) {
 					if (!boardState[i+1][r] && !boardState[i+1][r+1] && !boardState[i+1][r+2] && !boardState[i][r+1] && !boardState[i+2][r+1] && //center cross should be free
 							boardState[i+2][r] && boardState[i+2][r+2] && //bottom left and bottom right corners should be occupied
 							(boardState[i][r] ^ boardState[i][r+2])) { //either topleft or topright should be occupied, but not both 
