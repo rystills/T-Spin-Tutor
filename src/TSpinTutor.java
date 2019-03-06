@@ -14,6 +14,7 @@ public class TSpinTutor extends JFrame {
 	private static final long serialVersionUID = 1L;
 	//global random generator
 	static Random rand = new Random();
+	static boolean showDebugInfo = true;
 	//graphics constants
 	static enum Tetrimino {
         I(0,0,1,0,2,0,3,0), 
@@ -104,14 +105,17 @@ public class TSpinTutor extends JFrame {
 		@Override
 		protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            //text indicators
-            g.setFont(uiFont);
-            g.drawString(String.format("Current Tetrimino: %s",curBlock), 50, 40);
-            g.drawString(String.format("Next Tetrimino: %s",nextBlock), 50, 65);
-            g.drawString(String.format("Prev Frame Time: %dms",frameTime), 50, 90);
-            //board indicator
-           drawBoard(g);
-           drawFoundSetups(g);
+            if (showDebugInfo) {
+            	//text indicators
+                g.setFont(uiFont);
+                g.drawString(String.format("Current Tetrimino: %s",curBlock), 50, 40);
+                g.drawString(String.format("Next Tetrimino: %s",nextBlock), 50, 65);
+                g.drawString(String.format("Prev Frame Time: %dms",frameTime), 50, 90);
+            	//board
+                drawBoard(g);
+            }
+            //setup overlays
+            drawFoundSetups(g);	
         }
 		
 		/**
@@ -152,8 +156,8 @@ public class TSpinTutor extends JFrame {
              for (int i = 0; i < numRows; ++i) {
              	for (int r = 0; r < numCols; ++r) {
              		if (boardState[i][r]) {
-             			//draw the board state one block size to the right of the actual board
-             			g.fillRect(gridRight + 2*bSize + bSize*r,gridTop + bSize*i,bSize,bSize);
+             			//draw the debug board state in-between the player and opponent boards
+             			g.fillRect(gridRight + 200 + bSize*r,gridTop + bSize*i,bSize,bSize);
              		}
              	}
              }
