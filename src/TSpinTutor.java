@@ -45,14 +45,14 @@ public class TSpinTutor extends JFrame {
 	static final int bSizePrev = 28;
 	static final int bSizePrevFuture = 22;
 	static final int gridLeft = 308;
-	static final int gridRight = 632;
+	static final int gridRight = 632; //leftmost pixel of rightmost block
 	static final int gridTop = 160;
-	static final int gridBot = 844;
+	static final int gridBot = 844; //topmost pixel of bottommost block
 	static final int numRows = 20;
 	static final int numCols = 10;
 	//timing
 	static long time;
-    static final int fps = 60;    
+    static final int fps = 30;    
     static long frameTime = 0;
     //ui
     static Font uiFont = new Font("Courier", Font.BOLD,36);
@@ -168,7 +168,7 @@ public class TSpinTutor extends JFrame {
 	 * check the color of pixel 760,223 to determine the next tetrimino
 	 */
 	public static void determineNextTetrimino() {
-    	switch (capture.getRGB(760,223)) {
+    	switch (capture.getRGB(760-gridLeft,223-gridTop)) {
 		case -15658735: //I block
 			nextBlock = Tetrimino.I;
 			break;
@@ -201,44 +201,44 @@ public class TSpinTutor extends JFrame {
 	public static void determineCurrentTetrimino() {
     	shadowCols[0] = shadowCols[1] = shadowCols[2] = shadowCols[3] = -1;
 		curShadowCol = 0;
-    	for (int x = gridLeft; x <= gridRight; x+= bSize) {
-    		for (int y = gridTop; y <= gridBot; y += bSize) {
+    	for (int x = 0; x <= gridRight-gridLeft; x+= bSize) {
+    		for (int y = 0; y <= gridBot-gridTop; y += bSize) {
     			switch (capture.getRGB(x,y)) {
     			case -8335379: //I block
     				curBlock = Tetrimino.I;
-    				shadowRows[curShadowCol] = (y-gridTop)/bSize;
-    				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+    				shadowRows[curShadowCol] = y/bSize;
+    				shadowCols[curShadowCol++] = x/bSize;
     				
     				break;
     			case -6784: //O block
     				curBlock = Tetrimino.O;
-    				shadowRows[curShadowCol] = (y-gridTop)/bSize;
-    				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+    				shadowRows[curShadowCol] = y/bSize;
+    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -3500340: //T block
     				curBlock = Tetrimino.T;
-    				shadowRows[curShadowCol] = (y-gridTop)/bSize;
-    				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+    				shadowRows[curShadowCol] = y/bSize;
+    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -4923500: //S block
     				curBlock = Tetrimino.S;
-    				shadowRows[curShadowCol] = (y-gridTop)/bSize;
-    				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+    				shadowRows[curShadowCol] = y/bSize;
+    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -617316: //Z block
     				curBlock = Tetrimino.Z;
-    				shadowRows[curShadowCol] = (y-gridTop)/bSize;
-    				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+    				shadowRows[curShadowCol] = y/bSize;
+    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -8342818: //J block
     				curBlock = Tetrimino.J;
-    				shadowRows[curShadowCol] = (y-gridTop)/bSize;
-    				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+    				shadowRows[curShadowCol] = y/bSize;
+    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -17280: //L block
     				curBlock = Tetrimino.L;
-    				shadowRows[curShadowCol] = (y-gridTop)/bSize;
-    				shadowCols[curShadowCol++] = (x-gridLeft)/bSize;
+    				shadowRows[curShadowCol] = y/bSize;
+    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			default: //no block color detected
     				break;
@@ -251,10 +251,10 @@ public class TSpinTutor extends JFrame {
 	 * check the center color of each grid space to determine which spaces contain blocks, ignoring blocks above a shadow indicator block
 	 */
 	public static void determineBoardState() {
-    	for (int x = gridLeft; x <= gridRight; x+= bSize) {
-    		for (int y = gridBot; y >= gridTop; y -= bSize) {
-    			int r = (x-gridLeft)/bSize;
-    			int i = (y-gridTop)/bSize;
+    	for (int x = 0; x <= gridRight-gridLeft; x+= bSize) {
+    		for (int y = gridBot-gridTop; y >= 0; y -= bSize) {
+    			int r = x/bSize;
+    			int i = y/bSize;
     			//any block above and in the same column as a shadow indicator is guaranteed to be empty
 				if ((r == shadowCols[0] && i < shadowRows[0]) || (r == shadowCols[1] && i < shadowRows[1]) ||
 						(r == shadowCols[2] && i < shadowRows[2]) || (r == shadowCols[3] && i < shadowRows[3])) {
@@ -390,11 +390,12 @@ public class TSpinTutor extends JFrame {
         Panel panel = new Panel();
         tutor.add(panel);
         tutor.setVisible(true);
+        //we only need to capture the board itself and the next piece preview, so position the rect to encompass the board + 100 pixels
+        screenRect = new Rectangle(gridLeft, gridTop, gridRight+bSize-gridLeft + 100, gridBot+bSize-gridTop);
+    	Robot rob = new Robot();
         while(true) {
         	time = System.nanoTime();
-        	//recalculate the screen rectangle in case resolution changes
-        	screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-        	capture = new Robot().createScreenCapture(screenRect);
+        	capture = rob.createScreenCapture(screenRect);
 			
         	//extract the game state from the screen
         	determineNextTetrimino();
