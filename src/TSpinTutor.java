@@ -14,7 +14,7 @@ public class TSpinTutor extends JFrame {
 	private static final long serialVersionUID = 1L;
 	//global random generator
 	static Random rand = new Random();
-	static boolean showDebugInfo = true;
+	static boolean showDebugInfo = false;
 	//graphics constants
 	static enum Tetrimino {
         I(0,0,1,0,2,0,3,0), 
@@ -202,7 +202,7 @@ public class TSpinTutor extends JFrame {
     	shadowCols[0] = shadowCols[1] = shadowCols[2] = shadowCols[3] = -1;
 		curShadowCol = 0;
     	for (int x = 0; x <= gridRight-gridLeft; x+= bSize) {
-    		for (int y = 0; y <= gridBot-gridTop; y += bSize) {
+    		for (int y = 0; y <= gridBot-gridTop && curShadowCol <= 3; y += bSize) {
     			switch (capture.getRGB(x,y)) {
     			case -8335379: //I block
     				curBlock = Tetrimino.I;
