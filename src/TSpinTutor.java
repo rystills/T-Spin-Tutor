@@ -205,44 +205,32 @@ public class TSpinTutor extends JFrame {
     		for (int y = 0; y <= gridBot-gridTop && curShadowCol <= 3; y += bSize) {
     			switch (capture.getRGB(x,y)) {
     			case -8335379: //I block
-    				curBlock = Tetrimino.I;
-    				shadowRows[curShadowCol] = y/bSize;
-    				shadowCols[curShadowCol++] = x/bSize;
-    				
+    				curBlock = Tetrimino.I;    				
     				break;
     			case -6784: //O block
     				curBlock = Tetrimino.O;
-    				shadowRows[curShadowCol] = y/bSize;
-    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -3500340: //T block
     				curBlock = Tetrimino.T;
-    				shadowRows[curShadowCol] = y/bSize;
-    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -4923500: //S block
     				curBlock = Tetrimino.S;
-    				shadowRows[curShadowCol] = y/bSize;
-    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -617316: //Z block
     				curBlock = Tetrimino.Z;
-    				shadowRows[curShadowCol] = y/bSize;
-    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -8342818: //J block
     				curBlock = Tetrimino.J;
-    				shadowRows[curShadowCol] = y/bSize;
-    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			case -17280: //L block
     				curBlock = Tetrimino.L;
-    				shadowRows[curShadowCol] = y/bSize;
-    				shadowCols[curShadowCol++] = x/bSize;
     				break;
     			default: //no block color detected
-    				break;
+    				continue;
     			}
+    			//add the detected block to the shadow position arrays
+    			shadowRows[curShadowCol] = y/bSize;
+				shadowCols[curShadowCol++] = x/bSize;
     		}
     	}
 	}
